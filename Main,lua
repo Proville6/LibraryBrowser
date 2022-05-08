@@ -1,0 +1,310 @@
+´
+local _Libraries = {
+	['TestLibrary'] = function()
+		return 'Hello!'
+	end,
+	['TestLibrary2'] = function()
+		return 'Hello2!'
+	end,
+	['TestLibrary3'] = function()
+		return 'Hello3!'
+	end,
+}
+
+local UserInputService = game:GetService('UserInputService')
+local RunService = game:GetService('RunService')
+
+local LocalPlayer = game:GetService('Players').LocalPlayer
+
+local Selected,SelectedObject
+
+local Dragging
+local DragInput
+local DragStart
+local StartPosition
+
+local LastMousePosition
+local DragSpeed = 30
+
+--local Hash = Krnl.crypt.hash(tostring(math.random()))
+
+local libraryBrowser = Instance.new('ScreenGui')
+libraryBrowser.Name = 'libraryBrowser'
+libraryBrowser.IgnoreGuiInset = true
+libraryBrowser.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local topbar = Instance.new('Frame')
+topbar.Name = 'topbar'
+topbar.AnchorPoint = Vector2.new(0.5, 1)
+topbar.BackgroundColor3 = Color3.fromRGB(53, 53, 53)
+topbar.BorderSizePixel = 0
+topbar.Position = UDim2.fromScale(0.5, 0.3)
+topbar.Size = UDim2.fromOffset(300, 25)
+
+local main = Instance.new('Frame')
+main.Name = 'main'
+main.BackgroundColor3 = Color3.fromRGB(46, 46, 46)
+main.BorderSizePixel = 0
+main.Position = UDim2.fromOffset(0, 23)
+main.Size = UDim2.fromOffset(300, 410)
+
+local libraries = Instance.new('ScrollingFrame')
+libraries.Name = 'libraries'
+libraries.AutomaticCanvasSize = Enum.AutomaticSize.Y
+libraries.CanvasSize = UDim2.new()
+libraries.ScrollBarImageColor3 = Color3.fromRGB(148, 148, 148)
+libraries.ScrollBarThickness = 5
+libraries.Active = true
+libraries.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+libraries.BackgroundTransparency = 1
+libraries.BorderSizePixel = 0
+libraries.Position = UDim2.fromOffset(0, 10)
+libraries.Size = UDim2.new(1, -5, 1, -48)
+
+local uIListLayout = Instance.new('UIListLayout')
+uIListLayout.Name = 'uIListLayout'
+uIListLayout.Padding = UDim.new(0, 3)
+uIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+uIListLayout.Parent = libraries
+
+libraries.Parent = main
+
+local run = Instance.new('ImageButton')
+run.Name = 'run'
+run.Image = 'http://www.roblox.com/asset/?id=716902271'
+run.ImageColor3 = Color3.fromRGB(3, 145, 236)
+run.ScaleType = Enum.ScaleType.Slice
+run.SliceCenter = Rect.new(3, 3, 3, 3)
+run.AutoButtonColor = false
+run.AnchorPoint = Vector2.new(0, 1)
+run.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+run.BackgroundTransparency = 1
+run.BorderColor3 = Color3.fromRGB(0, 0, 0)
+run.BorderSizePixel = 0
+run.Position = UDim2.new(1, -49, 0.979, 0)
+run.Size = UDim2.fromOffset(42, 24)
+
+local label = Instance.new('TextLabel')
+label.Name = 'label'
+label.Font = Enum.Font.SourceSans
+label.Text = 'Run'
+label.TextColor3 = Color3.fromRGB(255, 255, 255)
+label.TextSize = 14
+label.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+label.BackgroundTransparency = 1
+label.BorderColor3 = Color3.fromRGB(0, 0, 0)
+label.BorderSizePixel = 0
+label.Size = UDim2.fromScale(1, 1)
+label.Parent = run
+
+run.Parent = main
+
+local search = Instance.new('ImageLabel')
+search.Name = 'search'
+search.Image = 'http://www.roblox.com/asset/?id=716902271'
+search.ImageColor3 = Color3.fromRGB(37, 37, 37)
+search.ScaleType = Enum.ScaleType.Slice
+search.SliceCenter = Rect.new(3, 3, 3, 3)
+search.AnchorPoint = Vector2.new(0.5, 1)
+search.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+search.BackgroundTransparency = 1
+search.BorderColor3 = Color3.fromRGB(0, 0, 0)
+search.BorderSizePixel = 0
+search.Position = UDim2.new(0.5, -25, 0.979, 0)
+search.Size = UDim2.new(1, -64, 0, 24)
+
+local searchLabel = Instance.new('TextBox')
+searchLabel.Name = 'searchLabel'
+searchLabel.ClearTextOnFocus = false
+searchLabel.Font = Enum.Font.SourceSans
+searchLabel.PlaceholderColor3 = Color3.fromRGB(153, 153, 153)
+searchLabel.PlaceholderText = 'Search'
+searchLabel.Text = ''
+searchLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+searchLabel.TextSize = 14
+searchLabel.TextXAlignment = Enum.TextXAlignment.Left
+searchLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+searchLabel.BackgroundTransparency = 1
+searchLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+searchLabel.BorderSizePixel = 0
+searchLabel.Size = UDim2.fromScale(1, 1)
+searchLabel.Parent = search
+
+search.Parent = main
+
+main.Parent = topbar
+
+local uICorner = Instance.new('UICorner')
+uICorner.Name = 'uICorner'
+uICorner.CornerRadius = UDim.new(0, 3)
+uICorner.Parent = topbar
+
+local title = Instance.new('TextLabel')
+title.Name = 'title'
+title.Font = Enum.Font.Gotham
+title.Text = 'Library Browser: Beta'
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.TextSize = 12
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+title.BackgroundTransparency = 1
+title.Size = UDim2.fromScale(1, 1)
+
+local uIPadding = Instance.new('UIPadding')
+uIPadding.Name = 'uIPadding'
+uIPadding.PaddingBottom = UDim.new(0, 6)
+uIPadding.PaddingLeft = UDim.new(0, 6)
+uIPadding.PaddingRight = UDim.new(0, 6)
+uIPadding.PaddingTop = UDim.new(0, 6)
+uIPadding.Parent = title
+
+title.Parent = topbar
+
+local close = Instance.new('TextButton')
+close.Name = 'close'
+close.Font = Enum.Font.SourceSans
+close.Text = '_'
+close.TextColor3 = Color3.fromRGB(255, 255, 255)
+close.TextSize = 20
+close.AnchorPoint = Vector2.new(1, 0)
+close.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+close.BackgroundTransparency = 1
+close.Position = UDim2.fromScale(1, 0)
+close.Size = UDim2.fromScale(1, 1)
+close.SizeConstraint = Enum.SizeConstraint.RelativeYY
+
+local uIPadding1 = Instance.new('UIPadding')
+uIPadding1.Name = 'uIPadding1'
+uIPadding1.PaddingBottom = UDim.new(0, 15)
+uIPadding1.PaddingLeft = UDim.new(0, 6)
+uIPadding1.PaddingRight = UDim.new(0, 6)
+uIPadding1.PaddingTop = UDim.new(0, 6)
+uIPadding1.Parent = close
+
+close.Parent = topbar
+
+topbar.Parent = libraryBrowser
+
+libraryBrowser.Parent = game:GetService('CoreGui')
+close.Activated:Connect(function()
+	main.Visible = not main.Visible
+end)
+
+function Lerp(a, b, m)
+	return a + (b - a) * m
+end
+
+function Update(Deltatime)
+	if not Dragging then
+		return
+	end
+	if not StartPosition then
+		return
+	end
+	local delta = (LastMousePosition - UserInputService:GetMouseLocation())
+	local xGoal = (StartPosition.X.Offset - delta.X);
+	local yGoal = (StartPosition.Y.Offset - delta.Y);
+	topbar.Position = UDim2.new(StartPosition.X.Scale,Lerp(topbar.Position.X.Offset,xGoal,Deltatime*DragSpeed),StartPosition.Y.Scale,Lerp(topbar.Position.Y.Offset,yGoal,Deltatime*DragSpeed))
+end
+
+topbar.InputBegan:Connect(function(Input)
+	if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+		Dragging = true
+		DragStart = Input.Position
+		StartPosition = topbar.Position
+		LastMousePosition = UserInputService:GetMouseLocation()
+
+		Input.Changed:Connect(function()
+			if Input.UserInputState == Enum.UserInputState.End then
+				Dragging = false
+			end
+		end)
+	end
+end)
+
+topbar.InputChanged:Connect(function(Input)
+	if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
+		DragInput = Input
+	end
+end)
+
+RunService.Heartbeat:Connect(Update)
+
+function CreateLibrary()
+	local library = Instance.new("ImageButton")
+	library.Name = "library"
+	library.Image = "http://www.roblox.com/asset/?id=716902271"
+	library.ImageColor3 = Color3.fromRGB(37, 37, 37)
+	library.ImageTransparency = 0.5
+	library.ScaleType = Enum.ScaleType.Slice
+	library.SliceCenter = Rect.new(3, 3, 3, 3)
+	library.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	library.BackgroundTransparency = 1
+	library.BorderSizePixel = 0
+	library.Size = UDim2.new(1, -10, 0, 25)
+	library.AutoButtonColor = false
+
+	local libraryName = Instance.new("TextLabel")
+	libraryName.Name = "libraryName"
+	libraryName.Font = Enum.Font.SourceSans
+	libraryName.TextColor3 = Color3.fromRGB(255, 255, 255)
+	libraryName.TextSize = 14
+	libraryName.TextXAlignment = Enum.TextXAlignment.Left
+	libraryName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+	libraryName.BackgroundTransparency = 1
+	libraryName.Size = UDim2.fromScale(1, 1)
+	libraryName.Parent = library
+
+	local uIPadding = Instance.new("UIPadding")
+	uIPadding.Name = "uIPadding"
+	uIPadding.PaddingBottom = UDim.new(0, 6)
+	uIPadding.PaddingLeft = UDim.new(0, 6)
+	uIPadding.PaddingRight = UDim.new(0, 6)
+	uIPadding.PaddingTop = UDim.new(0, 6)
+	uIPadding.Parent = library
+	return library
+end
+
+for Name,Code in pairs(_Libraries) do
+	local library = CreateLibrary()
+	library.Name = Name
+	library.libraryName.Text = Name
+	library.Parent = libraries
+	library.Activated:Connect(function()
+		if SelectedObject~=library then
+			library.ImageColor3 = Color3.fromRGB(37, 37, 37):Lerp(Color3.fromRGB(3, 145, 236),0.5)
+			if SelectedObject then
+				SelectedObject.ImageColor3 = Color3.fromRGB(37, 37, 37)
+			end
+			Selected = Code
+			SelectedObject = library
+		end
+	end)
+end
+
+run.Activated:Connect(function()
+	if Selected then
+		print(Selected())
+		loadstring(Selected())
+	end
+end)
+
+function FindFirstLower(Location:Instance,Name)
+	for _,Object in ipairs(Location:GetChildren()) do
+		if Object.Name:lower()==Name then
+			return Object
+		end
+	end
+end
+
+searchLabel:GetPropertyChangedSignal('Text'):Connect(function()
+	for Name,_ in pairs(_Libraries) do
+		local library = FindFirstLower(libraries,Name:lower())
+		local Start,End = Name:lower():find(searchLabel.Text:lower())
+		if Start and (Start<=1 or Start>=#Name/2.5) then
+			library.Visible = true
+		else
+			library.Visible = false
+		end
+	end
+end)
