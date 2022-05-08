@@ -1,4 +1,4 @@
-´
+
 local _Libraries = {
 	['TestLibrary'] = function()
 		return 'Hello!'
