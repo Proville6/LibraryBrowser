@@ -1,13 +1,7 @@
 
 local _Libraries = {
-	['TestLibrary'] = function()
-		return 'Hello!'
-	end,
-	['TestLibrary2'] = function()
-		return 'Hello2!'
-	end,
-	['TestLibrary3'] = function()
-		return 'Hello3!'
+	['Dex Explorer v2'] = function()
+	return game:HttpGet('https://raw.githubusercontent.com/PhoenixAceVFX/Roblox-Scripts/master/Dex%20Explorer%20V2.lua', true)
 	end,
 }
 
@@ -285,7 +279,7 @@ end
 run.Activated:Connect(function()
 	if Selected then
 		print(Selected())
-		loadstring(Selected())
+		loadstring(Selected())()
 	end
 end)
 
